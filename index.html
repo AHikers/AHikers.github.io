@@ -1,8 +1,41 @@
-<p>Hello 大家好</p>
-<p>我是霸都丶傲天，这是我的个人网站。 </p>
-<p>很高兴你来到这里, 你可以在以下的网站找到我</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web Bluetooth Example</title>
+</head>
+<body>
+  <button id="connectButton">Connect to Bluetooth Device</button>
+  <p id="status"></p>
 
-<ul>
-  <li> <a href="https://www.zhihu.com/people/AJLoveChina">知乎</a> </li>
-  <li> <a href="http://hejie.nigeerhuo.com">我的博客(已经不更细了,现在在知乎写文章)</a> </li>
-</ul>
+  <script>
+    document.getElementById('connectButton').addEventListener('click', async () => {
+      try {
+        // 请求蓝牙设备
+        const device = await navigator.bluetooth.requestDevice({
+          filters: [{ services: ['battery_service'] }]
+        });
+
+        // 连接到 GATT 服务器
+        const server = await device.gatt.connect();
+
+        // 获取服务
+        const service = await server.getPrimaryService('battery_service');
+
+        // 获取特征
+        const characteristic = await service.getCharacteristic('battery_level');
+
+        // 读取特征值
+        const value = await characteristic.readValue();
+        const batteryLevel = value.getUint8(0);
+
+        document.getElementById('status').innerText = `Battery Level: ${batteryLevel}%`;
+      } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('status').innerText = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
