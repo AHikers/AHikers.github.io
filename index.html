@@ -6,7 +6,7 @@
   <title>Web Bluetooth Example</title>
 </head>
 <body>
-  <button id="scanButton">Scan for Bluetooth Devices</button>
+  <button id="scanButton">Scan for Xiaomi Bluetooth Devices</button>
   <ul id="deviceList"></ul>
   <p id="status"></p>
 
@@ -19,11 +19,14 @@
           optionalServices: ['battery_service'] // 可选服务，用于连接后读取电池信息
         });
 
+        // 过滤包含 "xiaomi" 名字的设备
+        const xiaomiDevices = deviceArray.filter(device => device.name && device.name.toLowerCase().includes('xiaomi'));
+
         // 显示设备列表
         const deviceList = document.getElementById('deviceList');
         deviceList.innerHTML = ''; // 清空列表
 
-        deviceArray.forEach(device => {
+        xiaomiDevices.forEach(device => {
           const listItem = document.createElement('li');
           listItem.innerText = device.name || 'Unknown Device';
           listItem.addEventListener('click', async () => {
