@@ -15,17 +15,38 @@
       try {
         // 请求所有蓝牙设备
         const deviceArray = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true
+          acceptAllDevices: true,
+          optionalServices: ['battery_service'] // 可选服务，用于连接后读取电池信息
         });
 
-        // 过滤包含 "xiaomi" 名字的设备
-        const xiaomiDevices = deviceArray.filter(device => device.name && device.name.toLowerCase().includes('xiaomi'));
+        // 过滤包含 "xiaomi" 名字的设备，并检查是否支持 battery_service
+        const xiaomiDevices = await Promise.all(deviceArray.map(async device => {
+          try {
+            // 连接到 GATT 服务器
+            const server = await device.gatt.connect();
+
+            // 获取服务
+            const service = await server.getPrimaryService('battery_service');
+
+            // 如果设备支持 battery_service 且名字包含 "xiaomi"，则返回设备
+            if (device.name && device.name.toLowerCase().includes('xiaomi')) {
+              return device;
+            }
+          } catch (error) {
+            // 如果设备不支持 battery_service 或连接失败，则忽略该设备
+            console.error('Device not supported:', device.name || 'Unknown Device', error);
+          }
+          return null;
+        }));
+
+        // 过滤掉 null 值
+        const filteredDevices = xiaomiDevices.filter(device => device !== null);
 
         // 显示设备列表
         const deviceList = document.getElementById('deviceList');
         deviceList.innerHTML = ''; // 清空列表
 
-        xiaomiDevices.forEach(device => {
+        filteredDevices.forEach(device => {
           const listItem = document.createElement('li');
           listItem.innerText = device.name || 'Unknown Device';
           listItem.addEventListener('click', async () => {
