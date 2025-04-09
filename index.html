@@ -15,8 +15,7 @@
       try {
         // 请求所有蓝牙设备
         const deviceArray = await navigator.bluetooth.requestDevice({
-          acceptAllDevices: true,
-          optionalServices: ['battery_service'] // 可选服务，用于连接后读取电池信息
+          acceptAllDevices: true
         });
 
         // 过滤包含 "xiaomi" 名字的设备
