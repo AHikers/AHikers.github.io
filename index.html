@@ -6,33 +6,52 @@
   <title>Web Bluetooth Example</title>
 </head>
 <body>
-  <button id="connectButton">Connect to Bluetooth Device</button>
+  <button id="scanButton">Scan for Bluetooth Devices</button>
+  <ul id="deviceList"></ul>
   <p id="status"></p>
 
   <script>
-    document.getElementById('connectButton').addEventListener('click', async () => {
+    document.getElementById('scanButton').addEventListener('click', async () => {
       try {
-        // 请求蓝牙设备
-        const device = await navigator.bluetooth.requestDevice({
-          filters: [{ services: ['battery_service'] }]
+        // 请求所有蓝牙设备
+        const deviceArray = await navigator.bluetooth.requestDevice({
+          acceptAllDevices: true,
+          optionalServices: ['battery_service'] // 可选服务，用于连接后读取电池信息
         });
 
-        // 连接到 GATT 服务器
-        const server = await device.gatt.connect();
+        // 显示设备列表
+        const deviceList = document.getElementById('deviceList');
+        deviceList.innerHTML = ''; // 清空列表
 
-        // 获取服务
-        const service = await server.getPrimaryService('battery_service');
+        deviceArray.forEach(device => {
+          const listItem = document.createElement('li');
+          listItem.innerText = device.name || 'Unknown Device';
+          listItem.addEventListener('click', async () => {
+            try {
+              // 连接到 GATT 服务器
+              const server = await device.gatt.connect();
 
-        // 获取特征
-        const characteristic = await service.getCharacteristic('battery_level');
+              // 获取服务
+              const service = await server.getPrimaryService('battery_service');
 
-        // 读取特征值
-        const value = await characteristic.readValue();
-        const batteryLevel = value.getUint8(0);
+              // 获取特征
+              const characteristic = await service.getCharacteristic('battery_level');
 
-        document.getElementById('status').innerText = `Battery Level: ${batteryLevel}%`;
+              // 读取特征值
+              const value = await characteristic.readValue();
+              const batteryLevel = value.getUint8(0);
+
+              document.getElementById('status').innerText = `Connected to ${device.name || 'Unknown Device'}. Battery Level: ${batteryLevel}%`;
+            } catch (error) {
+              console.error('Error:', error);
+              document.getElementById('status').innerText = `Error: ${error.message}`;
+            }
+          });
+
+          deviceList.appendChild(listItem);
+        });
       } catch (error) {
-        console.error('Error---:', error);
+        console.error('Error:', error);
         document.getElementById('status').innerText = `Error: ${error.message}`;
       }
     });
